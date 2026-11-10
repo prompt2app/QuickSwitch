@@ -169,7 +169,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "switch.2", accessibilityDescription: "QuickSwitch")
+        // 默认尺寸偏小，放大到 17pt、加粗一点，和系统菜单栏图标视觉大小一致
+        let iconConfig = NSImage.SymbolConfiguration(pointSize: 17, weight: .medium)
+        let icon = NSImage(systemSymbolName: "bolt.square", accessibilityDescription: "QuickSwitch")?
+            .withSymbolConfiguration(iconConfig)
+        icon?.isTemplate = true   // 跟随菜单栏深浅色自动变色
+        statusItem.button?.image = icon
 
         switches = [
             Switch(title: "静音", symbol: "speaker.slash",
