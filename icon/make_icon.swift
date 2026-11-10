@@ -41,31 +41,25 @@ let gloss = NSGradient(colors: [NSColor.white.withAlphaComponent(0.18), NSColor.
 gloss.draw(in: NSRect(x: body.minX, y: body.midY, width: body.width, height: body.height / 2), angle: -90)
 NSGraphicsContext.restoreGraphicsState()
 
-// 两个拨动开关：上面是「开」，下面是「关」
-func drawSwitch(centerY: CGFloat, on: Bool) {
-    let w: CGFloat = 520, h: CGFloat = 220
-    let track = NSRect(x: (size - w) / 2, y: centerY - h / 2, width: w, height: h)
-    let trackPath = NSBezierPath(roundedRect: track, xRadius: h / 2, yRadius: h / 2)
-    (on ? NSColor.white : NSColor.white.withAlphaComponent(0.28)).setFill()
-    trackPath.fill()
+// 中间一道白色闪电（SF Symbol bolt.fill），和菜单栏图标呼应
+let cfg = NSImage.SymbolConfiguration(pointSize: 470, weight: .semibold)
+let bolt = NSImage(systemSymbolName: "bolt.fill", accessibilityDescription: nil)!.withSymbolConfiguration(cfg)!
+let white = NSImage(size: bolt.size)
+white.lockFocus()
+bolt.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1)
+NSColor.white.set()
+NSRect(origin: .zero, size: bolt.size).fill(using: .sourceAtop)
+white.unlockFocus()
 
-    let pad: CGFloat = 22
-    let d = h - pad * 2
-    let x = on ? track.maxX - pad - d : track.minX + pad
-    let knob = NSBezierPath(ovalIn: NSRect(x: x, y: track.minY + pad, width: d, height: d))
-
-    NSGraphicsContext.saveGraphicsState()
-    let s = NSShadow()
-    s.shadowColor = NSColor.black.withAlphaComponent(0.25)
-    s.shadowBlurRadius = 14
-    s.shadowOffset = NSSize(width: 0, height: -5)
-    s.set()
-    (on ? NSColor(srgbRed: 0.27, green: 0.42, blue: 0.95, alpha: 1) : NSColor.white).setFill()
-    knob.fill()
-    NSGraphicsContext.restoreGraphicsState()
-}
-drawSwitch(centerY: size / 2 + 150, on: true)
-drawSwitch(centerY: size / 2 - 150, on: false)
+NSGraphicsContext.saveGraphicsState()
+let boltShadow = NSShadow()
+boltShadow.shadowColor = NSColor(srgbRed: 0.10, green: 0.08, blue: 0.40, alpha: 0.45)
+boltShadow.shadowBlurRadius = 30
+boltShadow.shadowOffset = NSSize(width: 0, height: -14)
+boltShadow.set()
+white.draw(at: NSPoint(x: (size - bolt.size.width) / 2, y: (size - bolt.size.height) / 2),
+           from: .zero, operation: .sourceOver, fraction: 1)
+NSGraphicsContext.restoreGraphicsState()
 
 NSGraphicsContext.restoreGraphicsState()
 try! rep.representation(using: .png, properties: [:])!.write(to: URL(fileURLWithPath: out))

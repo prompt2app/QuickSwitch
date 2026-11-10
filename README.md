@@ -15,6 +15,10 @@
   <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT">
 </p>
 
+<p align="center">
+  <img src="docs/screenshot.png" width="300" alt="QuickSwitch 菜单截图">
+</p>
+
 ---
 
 ## ✨ 特点
@@ -66,7 +70,7 @@ cd QuickSwitch
 ./build.sh
 ```
 
-`build.sh` 会编译、ad-hoc 签名，安装到 `/Applications/QuickSwitch.app` 并启动。之后菜单栏会出现一个双拨动开关图标。
+`build.sh` 会编译、ad-hoc 签名，安装到 `/Applications/QuickSwitch.app` 并启动。之后菜单栏会出现一个方框闪电图标。
 
 **更新**：`git pull && ./build.sh`
 
@@ -95,6 +99,8 @@ QuickSwitch/
 ├── main.swift          # 全部代码
 ├── Info.plist          # 应用配置
 ├── build.sh            # 编译 + 安装 + 启动
+├── docs/
+│   └── screenshot.png  # README 截图
 └── icon/
     ├── make_icon.swift # 用代码绘制应用图标
     ├── icon_1024.png
