@@ -287,7 +287,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 // MARK: - 屏幕清洁
 
 /// 所有屏幕全黑，屏蔽键盘和鼠标点击，方便擦屏幕和键盘。
-/// 退出方式：按住 Esc 3 秒；或 2 分钟后自动退出（防止困住）。
+/// 退出方式：按住 Esc 2 秒；或 2 分钟后自动退出（防止困住）。
 final class CleanWindow: NSWindow {
     var onKeyDown: ((NSEvent) -> Void)?
     var onKeyUp: ((NSEvent) -> Void)?
@@ -305,7 +305,7 @@ final class ScreenCleaner {
     private var countdownTimer: Timer?
     private var hintLabels: [NSTextField] = []
     private var remaining = 120
-    private let holdSeconds = 3.0
+    private let holdSeconds = 2.0
     private let maxSeconds = 120
 
     var isRunning: Bool { !windows.isEmpty }
