@@ -122,6 +122,36 @@ enum Mirroring {
     }
 }
 
+// MARK: - 推出外接磁盘
+
+enum ExternalDisks {
+    /// 可推出的本地磁盘：U 盘、移动硬盘、SD 卡、挂载的磁盘映像（不含网络共享和系统盘）
+    static func list() -> [URL] {
+        let keys: [URLResourceKey] = [.volumeIsEjectableKey, .volumeIsRemovableKey,
+                                      .volumeIsInternalKey, .volumeIsLocalKey, .volumeIsRootFileSystemKey]
+        let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: keys,
+                                                         options: [.skipHiddenVolumes]) ?? []
+        return urls.filter { url in
+            guard let v = try? url.resourceValues(forKeys: Set(keys)) else { return false }
+            if v.volumeIsRootFileSystem == true || v.volumeIsLocal == false { return false }
+            return v.volumeIsEjectable == true || v.volumeIsRemovable == true || v.volumeIsInternal == false
+        }
+    }
+
+    /// 推出全部，返回推出失败的磁盘名和原因
+    static func ejectAll() -> [String] {
+        var failed: [String] = []
+        for url in list() {
+            do {
+                try NSWorkspace.shared.unmountAndEjectDevice(at: url)
+            } catch {
+                failed.append("\(url.lastPathComponent)：\(error.localizedDescription)")
+            }
+        }
+        return failed
+    }
+}
+
 // MARK: - 开关定义
 
 struct Switch {
@@ -214,11 +244,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         clean.image = NSImage(systemSymbolName: "sparkles.rectangle.stack", accessibilityDescription: nil)
         menu.addItem(clean)
 
+        let disks = ExternalDisks.list()
+        // 没有外接磁盘时不显示，菜单更干净
+        let eject = NSMenuItem(title: "推出外接磁盘", action: #selector(ejectDisks), keyEquivalent: "")
+        eject.target = self
+        eject.isHidden = disks.isEmpty
+        eject.toolTip = disks.map(\.lastPathComponent).joined(separator: "、")
+        eject.image = NSImage(systemSymbolName: "eject", accessibilityDescription: nil)
+        menu.addItem(eject)
+
         let mirrored = Mirroring.isActive()
-        let cast = NSMenuItem(title: mirrored ? "退出投屏（取消镜像）" : "退出投屏（当前未镜像）",
-                              action: mirrored ? #selector(stopMirroring) : nil, keyEquivalent: "")
+        // 只在镜像（投屏）时显示
+        let cast = NSMenuItem(title: "退出投屏", action: #selector(stopMirroring), keyEquivalent: "")
         cast.target = self
-        cast.isEnabled = mirrored
+        cast.isHidden = !mirrored
         cast.image = NSImage(systemSymbolName: "rectangle.on.rectangle.slash", accessibilityDescription: nil)
         menu.addItem(cast)
 
@@ -257,6 +296,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func startCleaning() {
         cleaner.start()
+    }
+
+    @objc private func ejectDisks() {
+        // 推出可能要等磁盘写完缓存，放到后台执行，避免卡住菜单
+        DispatchQueue.global(qos: .userInitiated).async {
+            let failed = ExternalDisks.ejectAll()
+            guard !failed.isEmpty else { return }
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "有磁盘未能推出"
+                alert.informativeText = failed.joined(separator: "\n") + "\n\n可能有应用正在使用这些磁盘，关闭后再试。"
+                alert.runModal()
+            }
+        }
     }
 
     /// 退出投屏：取消所有显示器镜像。AirPlay 连接不会断开，电视会变成扩展屏
